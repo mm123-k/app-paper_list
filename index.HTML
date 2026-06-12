@@ -1,665 +1,666 @@
-<!DOCTYPE html>
-<html lang="ja">
+<<!DOCTYPE html>
+    <html lang="ja">
 
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Ronbun" />
-    <title>Ronbun — 論文スワイプ</title>
-    <style>
-        /* ── tokens ── */
-        :root {
-            --ink: #1E1B4B;
-            --ink-soft: #4B4880;
-            --paper: #F8F7F4;
-            --card: #FFFFFF;
-            --amber: #D4A017;
-            --amber-lt: #FDF3D7;
-            --keep: #22C55E;
-            --skip: #EF4444;
-            --radius: 18px;
-            --shadow: 0 8px 40px rgba(30, 27, 75, 0.13);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        html,
-        body {
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-            background: var(--paper);
-            font-family: -apple-system, 'Helvetica Neue', sans-serif;
-            color: var(--ink);
-        }
-
-        /* ── layout ── */
-        #app {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            height: 100dvh;
-        }
-
-        /* ── header ── */
-        header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px 20px 12px;
-            flex-shrink: 0;
-        }
-
-        .logo {
-            font-family: Georgia, 'Times New Roman', serif;
-            font-size: 22px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            color: var(--ink);
-        }
-
-        .logo span {
-            color: var(--amber);
-        }
-
-        .list-btn {
-            background: var(--ink);
-            color: #fff;
-            border: none;
-            border-radius: 20px;
-            padding: 7px 16px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .list-btn .count {
-            background: var(--amber);
-            color: var(--ink);
-            border-radius: 10px;
-            padding: 1px 6px;
-            font-size: 11px;
-            font-weight: 700;
-        }
-
-        /* ── filters ── */
-        .filters {
-            padding: 0 20px 12px;
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            flex-shrink: 0;
-            scrollbar-width: none;
-        }
-
-        .filters::-webkit-scrollbar {
-            display: none;
-        }
-
-        .filter-chip {
-            background: transparent;
-            border: 1.5px solid var(--ink-soft);
-            color: var(--ink-soft);
-            border-radius: 20px;
-            padding: 5px 14px;
-            font-size: 12px;
-            font-weight: 600;
-            white-space: nowrap;
-            cursor: pointer;
-            transition: all .15s;
-        }
-
-        .filter-chip.active {
-            background: var(--ink);
-            border-color: var(--ink);
-            color: #fff;
-        }
-
-        /* ── card stack area ── */
-        #stack-area {
-            flex: 1;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            padding: 0 16px;
-        }
-
-        /* ── card ── */
-        .card {
-            position: absolute;
-            width: 100%;
-            max-width: 420px;
-            background: var(--card);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            padding: 24px 22px 20px;
-            cursor: grab;
-            user-select: none;
-            will-change: transform;
-            transition: box-shadow .2s;
-            touch-action: none;
-        }
-
-        .card:active {
-            cursor: grabbing;
-            box-shadow: 0 16px 60px rgba(30, 27, 75, 0.2);
-        }
-
-        .card-field {
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            color: var(--amber);
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .card-field::before {
-            content: '';
-            display: inline-block;
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--amber);
-        }
-
-        .card-title {
-            font-family: Georgia, 'Times New Roman', serif;
-            font-size: 17px;
-            font-weight: 700;
-            line-height: 1.4;
-            color: var(--ink);
-            margin-bottom: 10px;
-        }
-
-        .card-meta {
-            font-size: 11px;
-            color: var(--ink-soft);
-            margin-bottom: 14px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-
-        .card-meta-item {
-            background: #F0EFF8;
-            border-radius: 6px;
-            padding: 2px 8px;
-        }
-
-        .card-abstract {
-            font-size: 13.5px;
-            line-height: 1.7;
-            color: #333;
-            max-height: 200px;
-            overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: #DDD transparent;
-        }
-
-        .card-abstract::-webkit-scrollbar {
-            width: 3px;
-        }
-
-        .card-abstract::-webkit-scrollbar-thumb {
-            background: #DDD;
-            border-radius: 2px;
-        }
-
-        .no-abstract {
-            font-size: 13px;
-            color: #AAA;
-            font-style: italic;
-        }
-
-        /* swipe indicators */
-        .keep-label,
-        .skip-label {
-            position: absolute;
-            top: 24px;
-            font-size: 18px;
-            font-weight: 800;
-            letter-spacing: 2px;
-            border-radius: 8px;
-            padding: 4px 12px;
-            border: 3px solid;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity .05s;
-        }
-
-        .keep-label {
-            right: 20px;
-            color: var(--keep);
-            border-color: var(--keep);
-            transform: rotate(12deg);
-        }
-
-        .skip-label {
-            left: 20px;
-            color: var(--skip);
-            border-color: var(--skip);
-            transform: rotate(-12deg);
-        }
-
-        /* behind card shadows */
-        .card.behind-1 {
-            transform: scale(0.95) translateY(10px);
-            z-index: 1;
-        }
-
-        .card.behind-2 {
-            transform: scale(0.90) translateY(20px);
-            z-index: 0;
-        }
-
-        /* ── action buttons ── */
-        .actions {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 24px;
-            padding: 16px 20px 24px;
-            flex-shrink: 0;
-        }
-
-        .action-btn {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 26px;
-            transition: transform .1s, box-shadow .1s;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-        }
-
-        .action-btn:active {
-            transform: scale(0.92);
-        }
-
-        .btn-skip {
-            background: #fff;
-            color: var(--skip);
-        }
-
-        .btn-keep {
-            background: var(--ink);
-            color: #fff;
-        }
-
-        .btn-undo {
-            background: #fff;
-            color: var(--ink-soft);
-            font-size: 20px;
-            width: 46px;
-            height: 46px;
-        }
-
-        /* ── empty state ── */
-        #empty {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            gap: 12px;
-            color: var(--ink-soft);
-        }
-
-        #empty .empty-icon {
-            font-size: 48px;
-        }
-
-        #empty h2 {
-            font-family: Georgia, serif;
-            font-size: 20px;
-            color: var(--ink);
-        }
-
-        #empty p {
-            font-size: 14px;
-            text-align: center;
-            max-width: 240px;
-            line-height: 1.6;
-        }
-
-        #empty button {
-            margin-top: 8px;
-            background: var(--ink);
-            color: #fff;
-            border: none;
-            border-radius: 20px;
-            padding: 10px 24px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        /* ── loading ── */
-        #loading {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            gap: 16px;
-            color: var(--ink-soft);
-        }
-
-        .spinner {
-            width: 36px;
-            height: 36px;
-            border: 3px solid #DDD;
-            border-top-color: var(--ink);
-            border-radius: 50%;
-            animation: spin .7s linear infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Ronbun" />
+        <title>Ronbun — 論文スワイプ</title>
+        <style>
+            /* ── tokens ── */
+            :root {
+                --ink: #1E1B4B;
+                --ink-soft: #4B4880;
+                --paper: #F8F7F4;
+                --card: #FFFFFF;
+                --amber: #D4A017;
+                --amber-lt: #FDF3D7;
+                --keep: #22C55E;
+                --skip: #EF4444;
+                --radius: 18px;
+                --shadow: 0 8px 40px rgba(30, 27, 75, 0.13);
             }
-        }
 
-        /* ── reading list panel ── */
-        #list-panel {
-            position: fixed;
-            inset: 0;
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            background: var(--paper);
-            transform: translateY(100%);
-            transition: transform .3s cubic-bezier(.4, 0, .2, 1);
-        }
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+                -webkit-tap-highlight-color: transparent;
+            }
 
-        #list-panel.open {
-            transform: translateY(0);
-        }
+            html,
+            body {
+                height: 100%;
+                width: 100%;
+                overflow: hidden;
+                background: var(--paper);
+                font-family: -apple-system, 'Helvetica Neue', sans-serif;
+                color: var(--ink);
+            }
 
-        .panel-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 20px 20px 16px;
-            border-bottom: 1px solid #E8E6F0;
-            flex-shrink: 0;
-        }
+            /* ── layout ── */
+            #app {
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+                height: 100dvh;
+            }
 
-        .panel-title {
-            font-family: Georgia, serif;
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--ink);
-        }
+            /* ── header ── */
+            header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 16px 20px 12px;
+                flex-shrink: 0;
+            }
 
-        .close-btn {
-            background: #EEEDF6;
-            border: none;
-            border-radius: 50%;
-            width: 34px;
-            height: 34px;
-            font-size: 18px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--ink);
-        }
+            .logo {
+                font-family: Georgia, 'Times New Roman', serif;
+                font-size: 22px;
+                font-weight: 700;
+                letter-spacing: -0.5px;
+                color: var(--ink);
+            }
 
-        #list-items {
-            flex: 1;
-            overflow-y: auto;
-            padding: 16px 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
+            .logo span {
+                color: var(--amber);
+            }
 
-        .list-item {
-            background: var(--card);
-            border-radius: 14px;
-            padding: 16px;
-            box-shadow: 0 2px 12px rgba(30, 27, 75, 0.07);
-        }
+            .list-btn {
+                background: var(--ink);
+                color: #fff;
+                border: none;
+                border-radius: 20px;
+                padding: 7px 16px;
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
 
-        .list-item-field {
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            color: var(--amber);
-            margin-bottom: 6px;
-        }
+            .list-btn .count {
+                background: var(--amber);
+                color: var(--ink);
+                border-radius: 10px;
+                padding: 1px 6px;
+                font-size: 11px;
+                font-weight: 700;
+            }
 
-        .list-item-title {
-            font-family: Georgia, serif;
-            font-size: 14px;
-            font-weight: 700;
-            line-height: 1.4;
-            color: var(--ink);
-            margin-bottom: 8px;
-        }
+            /* ── filters ── */
+            .filters {
+                padding: 0 20px 12px;
+                display: flex;
+                gap: 8px;
+                overflow-x: auto;
+                flex-shrink: 0;
+                scrollbar-width: none;
+            }
 
-        .list-item-meta {
-            font-size: 11px;
-            color: var(--ink-soft);
-            margin-bottom: 10px;
-        }
+            .filters::-webkit-scrollbar {
+                display: none;
+            }
 
-        .list-item-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            background: var(--ink);
-            color: #fff;
-            text-decoration: none;
-            border-radius: 8px;
-            padding: 6px 12px;
-            font-size: 12px;
-            font-weight: 600;
-        }
+            .filter-chip {
+                background: transparent;
+                border: 1.5px solid var(--ink-soft);
+                color: var(--ink-soft);
+                border-radius: 20px;
+                padding: 5px 14px;
+                font-size: 12px;
+                font-weight: 600;
+                white-space: nowrap;
+                cursor: pointer;
+                transition: all .15s;
+            }
 
-        .list-item-remove {
-            float: right;
-            background: none;
-            border: none;
-            color: #CCC;
-            font-size: 16px;
-            cursor: pointer;
-            padding: 0 0 0 8px;
-        }
+            .filter-chip.active {
+                background: var(--ink);
+                border-color: var(--ink);
+                color: #fff;
+            }
 
-        .empty-list {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            gap: 10px;
-            color: var(--ink-soft);
-            font-size: 14px;
-        }
+            /* ── card stack area ── */
+            #stack-area {
+                flex: 1;
+                position: relative;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+                padding: 0 16px;
+            }
 
-        .empty-list .icon {
-            font-size: 40px;
-        }
+            /* ── card ── */
+            .card {
+                position: absolute;
+                width: 100%;
+                max-width: 420px;
+                background: var(--card);
+                border-radius: var(--radius);
+                box-shadow: var(--shadow);
+                padding: 24px 22px 20px;
+                cursor: grab;
+                user-select: none;
+                will-change: transform;
+                transition: box-shadow .2s;
+                touch-action: none;
+            }
 
-        /* safe area */
-        .safe-bottom {
-            padding-bottom: env(safe-area-inset-bottom, 0px);
-        }
-    </style>
-</head>
+            .card:active {
+                cursor: grabbing;
+                box-shadow: 0 16px 60px rgba(30, 27, 75, 0.2);
+            }
 
-<body>
-    <div id="app">
-        <header>
-            <div class="logo">ron<span>.</span>bun</div>
-            <button class="list-btn" onclick="openList()">
-                📚 読みたい <span class="count" id="list-count">0</span>
-            </button>
-        </header>
+            .card-field {
+                font-size: 10px;
+                font-weight: 700;
+                letter-spacing: 1px;
+                text-transform: uppercase;
+                color: var(--amber);
+                margin-bottom: 10px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
 
-        <div class="filters" id="filters">
-            <button class="filter-chip active" data-field="psychology"
-                onclick="setField(this,'psychology')">心理学</button>
-            <button class="filter-chip" data-field="sociology" onclick="setField(this,'sociology')">社会学</button>
-            <button class="filter-chip" data-field="ethnology" onclick="setField(this,'ethnology')">民族学</button>
-            <button class="filter-chip" data-field="anthropology" onclick="setField(this,'anthropology')">文化人類学</button>
-            <button class="filter-chip" data-field="education" onclick="setField(this,'education')">教育学</button>
-        </div>
+            .card-field::before {
+                content: '';
+                display: inline-block;
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: var(--amber);
+            }
 
-        <div id="stack-area">
-            <div id="loading">
-                <div class="spinner"></div>
-                <p style="font-size:14px">論文を取得中…</p>
-            </div>
-            <div id="empty" style="display:none;flex-direction:column">
-                <div class="empty-icon">🎉</div>
-                <h2>全部チェックしました</h2>
-                <p>このジャンルの論文は一通り見ました。別のジャンルを試してみてください。</p>
-                <button onclick="reloadField()">もう一度読み込む</button>
-            </div>
-        </div>
+            .card-title {
+                font-family: Georgia, 'Times New Roman', serif;
+                font-size: 17px;
+                font-weight: 700;
+                line-height: 1.4;
+                color: var(--ink);
+                margin-bottom: 10px;
+            }
 
-        <div class="actions safe-bottom">
-            <button class="action-btn btn-undo" onclick="undo()" title="戻る">↩</button>
-            <button class="action-btn btn-skip" onclick="swipeOut('left')" title="スキップ">✕</button>
-            <button class="action-btn btn-keep" onclick="swipeOut('right')" title="読みたい">📖</button>
-        </div>
-    </div>
+            .card-meta {
+                font-size: 11px;
+                color: var(--ink-soft);
+                margin-bottom: 14px;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
 
-    <!-- Reading list panel -->
-    <div id="list-panel">
-        <div class="panel-header">
-            <div class="panel-title">📚 読みたいリスト</div>
-            <button class="close-btn" onclick="closeList()">✕</button>
-        </div>
-        <div id="list-items"></div>
-    </div>
+            .card-meta-item {
+                background: #F0EFF8;
+                border-radius: 6px;
+                padding: 2px 8px;
+            }
 
-    <script>
-        // ── State ──
-        const FIELDS = {
-            psychology: { label: '心理学', query: '心理学' },
-            sociology: { label: '社会学', query: '社会学' },
-            ethnology: { label: '民族学', query: '民族学' },
-            anthropology: { label: '文化人類学', query: '文化人類学' },
-            education: { label: '教育学', query: '教育学' },
-        };
+            .card-abstract {
+                font-size: 13.5px;
+                line-height: 1.7;
+                color: #333;
+                max-height: 200px;
+                overflow-y: auto;
+                scrollbar-width: thin;
+                scrollbar-color: #DDD transparent;
+            }
 
-        let currentField = 'psychology';
-        let papers = [];
-        let currentIndex = 0;
-        let history = [];
-        let readList = JSON.parse(localStorage.getItem('ronbun_list') || '[]');
-        let isAnimating = false;
+            .card-abstract::-webkit-scrollbar {
+                width: 3px;
+            }
 
-        // ── DOM refs ──
-        const stackArea = document.getElementById('stack-area');
-        const loading = document.getElementById('loading');
-        const empty = document.getElementById('empty');
+            .card-abstract::-webkit-scrollbar-thumb {
+                background: #DDD;
+                border-radius: 2px;
+            }
 
-        // ── Init ──
-        updateListCount();
-        fetchPapers(currentField);
+            .no-abstract {
+                font-size: 13px;
+                color: #AAA;
+                font-style: italic;
+            }
 
-        // ── API ──
-        async function fetchPapers(field) {
-            loading.style.display = 'flex';
-            empty.style.display = 'none';
-            removeCards();
-            papers = [];
-            currentIndex = 0;
-            history = [];
+            /* swipe indicators */
+            .keep-label,
+            .skip-label {
+                position: absolute;
+                top: 24px;
+                font-size: 18px;
+                font-weight: 800;
+                letter-spacing: 2px;
+                border-radius: 8px;
+                padding: 4px 12px;
+                border: 3px solid;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity .05s;
+            }
 
-            const q = FIELDS[field].query;
-            const url = `/api/search?query=${encodeURIComponent(q)}`;
+            .keep-label {
+                right: 20px;
+                color: var(--keep);
+                border-color: var(--keep);
+                transform: rotate(12deg);
+            }
 
-            try {
-                const res = await fetch(url);
-                const text = await res.text();
-                const xml = new DOMParser().parseFromString(text, 'application/xml');
-                const entries = xml.querySelectorAll('entry');
+            .skip-label {
+                left: 20px;
+                color: var(--skip);
+                border-color: var(--skip);
+                transform: rotate(-12deg);
+            }
 
-                entries.forEach(e => {
-                    const title = e.querySelector('title')?.textContent?.trim() || '';
-                    const abstract = e.querySelector('description')?.textContent?.trim()
-                        || e.querySelector('abstract')?.textContent?.trim()
-                        || '';
-                    const link = e.querySelector('link[type="text/html"]')?.getAttribute('href')
-                        || e.querySelector('link')?.getAttribute('href') || '';
-                    const author = [...e.querySelectorAll('author name')].map(a => a.textContent).join(', ') || '著者不明';
-                    const year = e.querySelector('date')?.textContent?.slice(0, 4) || '';
-                    const journal = e.querySelector('publicationName')?.textContent?.trim()
-                        || e.querySelector('source')?.textContent?.trim() || '';
+            /* behind card shadows */
+            .card.behind-1 {
+                transform: scale(0.95) translateY(10px);
+                z-index: 1;
+            }
 
-                    if (title) {
-                        papers.push({ title, abstract, link, author, year, journal });
-                    }
-                });
+            .card.behind-2 {
+                transform: scale(0.90) translateY(20px);
+                z-index: 0;
+            }
 
-                loading.style.display = 'none';
+            /* ── action buttons ── */
+            .actions {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 24px;
+                padding: 16px 20px 24px;
+                flex-shrink: 0;
+            }
 
-                if (papers.length === 0) {
-                    empty.style.display = 'flex';
-                    return;
+            .action-btn {
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                border: none;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 26px;
+                transition: transform .1s, box-shadow .1s;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            }
+
+            .action-btn:active {
+                transform: scale(0.92);
+            }
+
+            .btn-skip {
+                background: #fff;
+                color: var(--skip);
+            }
+
+            .btn-keep {
+                background: var(--ink);
+                color: #fff;
+            }
+
+            .btn-undo {
+                background: #fff;
+                color: var(--ink-soft);
+                font-size: 20px;
+                width: 46px;
+                height: 46px;
+            }
+
+            /* ── empty state ── */
+            #empty {
+                display: none;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100%;
+                gap: 12px;
+                color: var(--ink-soft);
+            }
+
+            #empty .empty-icon {
+                font-size: 48px;
+            }
+
+            #empty h2 {
+                font-family: Georgia, serif;
+                font-size: 20px;
+                color: var(--ink);
+            }
+
+            #empty p {
+                font-size: 14px;
+                text-align: center;
+                max-width: 240px;
+                line-height: 1.6;
+            }
+
+            #empty button {
+                margin-top: 8px;
+                background: var(--ink);
+                color: #fff;
+                border: none;
+                border-radius: 20px;
+                padding: 10px 24px;
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+            }
+
+            /* ── loading ── */
+            #loading {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100%;
+                gap: 16px;
+                color: var(--ink-soft);
+            }
+
+            .spinner {
+                width: 36px;
+                height: 36px;
+                border: 3px solid #DDD;
+                border-top-color: var(--ink);
+                border-radius: 50%;
+                animation: spin .7s linear infinite;
+            }
+
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
                 }
-
-                renderStack();
-            } catch (err) {
-                console.error(err);
-                loading.style.display = 'none';
-                empty.style.display = 'flex';
             }
-        }
 
-        // ── Render cards ──
-        function renderStack() {
-            removeCards();
-            for (let i = Math.min(currentIndex + 2, papers.length - 1); i >= currentIndex; i--) {
-                if (i < papers.length) createCard(papers[i], i);
+            /* ── reading list panel ── */
+            #list-panel {
+                position: fixed;
+                inset: 0;
+                z-index: 100;
+                display: flex;
+                flex-direction: column;
+                background: var(--paper);
+                transform: translateY(100%);
+                transition: transform .3s cubic-bezier(.4, 0, .2, 1);
             }
-            updateButtonStates();
-        }
 
-        function removeCards() {
-            document.querySelectorAll('.card').forEach(c => c.remove());
-        }
+            #list-panel.open {
+                transform: translateY(0);
+            }
 
-        function createCard(paper, idx) {
-            const isTop = idx === currentIndex;
-            const diff = idx - currentIndex;
+            .panel-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 20px 20px 16px;
+                border-bottom: 1px solid #E8E6F0;
+                flex-shrink: 0;
+            }
 
-            const card = document.createElement('div');
-            card.className = 'card' + (diff === 1 ? ' behind-1' : diff === 2 ? ' behind-2' : '');
-            card.dataset.idx = idx;
-            card.style.zIndex = 10 - diff;
+            .panel-title {
+                font-family: Georgia, serif;
+                font-size: 20px;
+                font-weight: 700;
+                color: var(--ink);
+            }
 
-            const hasAbstract = paper.abstract && paper.abstract.length > 10;
-            const fieldLabel = FIELDS[currentField]?.label || '';
+            .close-btn {
+                background: #EEEDF6;
+                border: none;
+                border-radius: 50%;
+                width: 34px;
+                height: 34px;
+                font-size: 18px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: var(--ink);
+            }
 
-            card.innerHTML = `
+            #list-items {
+                flex: 1;
+                overflow-y: auto;
+                padding: 16px 20px;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .list-item {
+                background: var(--card);
+                border-radius: 14px;
+                padding: 16px;
+                box-shadow: 0 2px 12px rgba(30, 27, 75, 0.07);
+            }
+
+            .list-item-field {
+                font-size: 10px;
+                font-weight: 700;
+                letter-spacing: 1px;
+                text-transform: uppercase;
+                color: var(--amber);
+                margin-bottom: 6px;
+            }
+
+            .list-item-title {
+                font-family: Georgia, serif;
+                font-size: 14px;
+                font-weight: 700;
+                line-height: 1.4;
+                color: var(--ink);
+                margin-bottom: 8px;
+            }
+
+            .list-item-meta {
+                font-size: 11px;
+                color: var(--ink-soft);
+                margin-bottom: 10px;
+            }
+
+            .list-item-link {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                background: var(--ink);
+                color: #fff;
+                text-decoration: none;
+                border-radius: 8px;
+                padding: 6px 12px;
+                font-size: 12px;
+                font-weight: 600;
+            }
+
+            .list-item-remove {
+                float: right;
+                background: none;
+                border: none;
+                color: #CCC;
+                font-size: 16px;
+                cursor: pointer;
+                padding: 0 0 0 8px;
+            }
+
+            .empty-list {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100%;
+                gap: 10px;
+                color: var(--ink-soft);
+                font-size: 14px;
+            }
+
+            .empty-list .icon {
+                font-size: 40px;
+            }
+
+            /* safe area */
+            .safe-bottom {
+                padding-bottom: env(safe-area-inset-bottom, 0px);
+            }
+        </style>
+    </head>
+
+    <body>
+        <div id="app">
+            <header>
+                <div class="logo">ron<span>.</span>bun</div>
+                <button class="list-btn" onclick="openList()">
+                    📚 読みたい <span class="count" id="list-count">0</span>
+                </button>
+            </header>
+
+            <div class="filters" id="filters">
+                <button class="filter-chip active" data-field="psychology"
+                    onclick="setField(this,'psychology')">心理学</button>
+                <button class="filter-chip" data-field="sociology" onclick="setField(this,'sociology')">社会学</button>
+                <button class="filter-chip" data-field="ethnology" onclick="setField(this,'ethnology')">民族学</button>
+                <button class="filter-chip" data-field="anthropology"
+                    onclick="setField(this,'anthropology')">文化人類学</button>
+                <button class="filter-chip" data-field="education" onclick="setField(this,'education')">教育学</button>
+            </div>
+
+            <div id="stack-area">
+                <div id="loading">
+                    <div class="spinner"></div>
+                    <p style="font-size:14px">論文を取得中…</p>
+                </div>
+                <div id="empty" style="display:none;flex-direction:column">
+                    <div class="empty-icon">🎉</div>
+                    <h2>全部チェックしました</h2>
+                    <p>このジャンルの論文は一通り見ました。別のジャンルを試してみてください。</p>
+                    <button onclick="reloadField()">もう一度読み込む</button>
+                </div>
+            </div>
+
+            <div class="actions safe-bottom">
+                <button class="action-btn btn-undo" onclick="undo()" title="戻る">↩</button>
+                <button class="action-btn btn-skip" onclick="swipeOut('left')" title="スキップ">✕</button>
+                <button class="action-btn btn-keep" onclick="swipeOut('right')" title="読みたい">📖</button>
+            </div>
+        </div>
+
+        <!-- Reading list panel -->
+        <div id="list-panel">
+            <div class="panel-header">
+                <div class="panel-title">📚 読みたいリスト</div>
+                <button class="close-btn" onclick="closeList()">✕</button>
+            </div>
+            <div id="list-items"></div>
+        </div>
+
+        <script>
+            // ── State ──
+            const FIELDS = {
+                psychology: { label: '心理学', query: '心理学' },
+                sociology: { label: '社会学', query: '社会学' },
+                ethnology: { label: '民族学', query: '民族学' },
+                anthropology: { label: '文化人類学', query: '文化人類学' },
+                education: { label: '教育学', query: '教育学' },
+            };
+
+            let currentField = 'psychology';
+            let papers = [];
+            let currentIndex = 0;
+            let history = [];
+            let readList = JSON.parse(localStorage.getItem('ronbun_list') || '[]');
+            let isAnimating = false;
+
+            // ── DOM refs ──
+            const stackArea = document.getElementById('stack-area');
+            const loading = document.getElementById('loading');
+            const empty = document.getElementById('empty');
+
+            // ── Init ──
+            updateListCount();
+            fetchPapers(currentField);
+
+            // ── API ──
+            async function fetchPapers(field) {
+                loading.style.display = 'flex';
+                empty.style.display = 'none';
+                removeCards();
+                papers = [];
+                currentIndex = 0;
+                history = [];
+
+                const q = FIELDS[field].query;
+                const url = `/api/search?q=${encodeURIComponent(q)}`;
+
+                try {
+                    const res = await fetch(url);
+                    const text = await res.text();
+                    const xml = new DOMParser().parseFromString(text, 'application/xml');
+                    const entries = xml.querySelectorAll('entry');
+
+                    entries.forEach(e => {
+                        const titleJa = e.querySelector("article_title ja")?.textContent?.trim();
+                        const titleEn = e.querySelector("article_title en")?.textContent?.trim();
+                        const title = titleJa || titleEn || e.querySelector("title")?.textContent?.trim() || "";
+                        const linkJa = e.querySelector("article_link ja")?.textContent?.trim();
+                        const linkEn = e.querySelector("article_link en")?.textContent?.trim();
+                        const link = linkJa || linkEn || e.querySelector("link")?.getAttribute("href") || "";
+                        const authorNodes = e.querySelectorAll("author ja name");
+                        const author = authorNodes.length ? [...authorNodes].map(a => a.textContent.trim()).join(", ") : e.querySelector("author en name")?.textContent?.trim() || "著者不明";
+                        const journal = e.querySelector("material_title ja")?.textContent?.trim() || e.querySelector("material_title en")?.textContent?.trim() || "";
+                        const year = e.querySelector("pubyear")?.textContent?.trim() || "";
+
+                        if (title) { papers.push({ title, link, author, year, journal, abstract: "" }); }
+
+
+                    });
+
+                    loading.style.display = 'none';
+
+                    if (papers.length === 0) {
+                        empty.style.display = 'flex';
+                        return;
+                    }
+
+                    renderStack();
+                } catch (err) {
+                    console.error(err);
+                    loading.style.display = 'none';
+                    empty.style.display = 'flex';
+                }
+            }
+
+            // ── Render cards ──
+            function renderStack() {
+                removeCards();
+                for (let i = Math.min(currentIndex + 2, papers.length - 1); i >= currentIndex; i--) {
+                    if (i < papers.length) createCard(papers[i], i);
+                }
+                updateButtonStates();
+            }
+
+            function removeCards() {
+                document.querySelectorAll('.card').forEach(c => c.remove());
+            }
+
+            function createCard(paper, idx) {
+                const isTop = idx === currentIndex;
+                const diff = idx - currentIndex;
+
+                const card = document.createElement('div');
+                card.className = 'card' + (diff === 1 ? ' behind-1' : diff === 2 ? ' behind-2' : '');
+                card.dataset.idx = idx;
+                card.style.zIndex = 10 - diff;
+
+                const hasAbstract = paper.abstract && paper.abstract.length > 10;
+                const fieldLabel = FIELDS[currentField]?.label || '';
+
+                card.innerHTML = `
     <div class="card-field">${fieldLabel}</div>
     <div class="card-title">${escHtml(paper.title)}</div>
     <div class="card-meta">
@@ -674,184 +675,184 @@
     <div class="skip-label">スキップ</div>
   `;
 
-            if (isTop) setupDrag(card);
-            stackArea.appendChild(card);
-        }
+                if (isTop) setupDrag(card);
+                stackArea.appendChild(card);
+            }
 
-        function escHtml(s) {
-            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        }
+            function escHtml(s) {
+                return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            }
 
-        // ── Drag / Touch ──
-        function setupDrag(card) {
-            let startX = 0, startY = 0, currentX = 0, dragging = false;
+            // ── Drag / Touch ──
+            function setupDrag(card) {
+                let startX = 0, startY = 0, currentX = 0, dragging = false;
 
-            const onStart = (x, y) => {
+                const onStart = (x, y) => {
+                    if (isAnimating) return;
+                    startX = x; startY = y;
+                    dragging = true;
+                    card.style.transition = 'none';
+                };
+
+                const onMove = (x, y) => {
+                    if (!dragging) return;
+                    currentX = x - startX;
+                    const rot = currentX * 0.08;
+                    card.style.transform = `translateX(${currentX}px) rotate(${rot}deg)`;
+                    const ratio = Math.min(Math.abs(currentX) / 100, 1);
+                    card.querySelector('.keep-label').style.opacity = currentX > 20 ? ratio : 0;
+                    card.querySelector('.skip-label').style.opacity = currentX < -20 ? ratio : 0;
+                };
+
+                const onEnd = () => {
+                    if (!dragging) return;
+                    dragging = false;
+                    if (currentX > 80) { swipeOut('right'); }
+                    else if (currentX < -80) { swipeOut('left'); }
+                    else {
+                        card.style.transition = 'transform .3s cubic-bezier(.4,0,.2,1)';
+                        card.style.transform = '';
+                        card.querySelector('.keep-label').style.opacity = 0;
+                        card.querySelector('.skip-label').style.opacity = 0;
+                    }
+                };
+
+                // Touch
+                card.addEventListener('touchstart', e => { const t = e.touches[0]; onStart(t.clientX, t.clientY); }, { passive: true });
+                card.addEventListener('touchmove', e => { const t = e.touches[0]; onMove(t.clientX, t.clientY); e.preventDefault(); }, { passive: false });
+                card.addEventListener('touchend', () => onEnd());
+
+                // Mouse
+                card.addEventListener('mousedown', e => onStart(e.clientX, e.clientY));
+                window.addEventListener('mousemove', e => { if (dragging) onMove(e.clientX, e.clientY); });
+                window.addEventListener('mouseup', () => { if (dragging) onEnd(); });
+            }
+
+            // ── Swipe ──
+            function swipeOut(dir) {
                 if (isAnimating) return;
-                startX = x; startY = y;
-                dragging = true;
-                card.style.transition = 'none';
-            };
+                const card = document.querySelector(`.card[data-idx="${currentIndex}"]`);
+                if (!card) return;
 
-            const onMove = (x, y) => {
-                if (!dragging) return;
-                currentX = x - startX;
-                const rot = currentX * 0.08;
-                card.style.transform = `translateX(${currentX}px) rotate(${rot}deg)`;
-                const ratio = Math.min(Math.abs(currentX) / 100, 1);
-                card.querySelector('.keep-label').style.opacity = currentX > 20 ? ratio : 0;
-                card.querySelector('.skip-label').style.opacity = currentX < -20 ? ratio : 0;
-            };
+                isAnimating = true;
+                const x = dir === 'right' ? window.innerWidth + 100 : -(window.innerWidth + 100);
+                card.style.transition = 'transform .35s cubic-bezier(.4,0,.2,1), opacity .35s';
+                card.style.transform = `translateX(${x}px) rotate(${dir === 'right' ? 20 : -20}deg)`;
+                card.style.opacity = '0';
 
-            const onEnd = () => {
-                if (!dragging) return;
-                dragging = false;
-                if (currentX > 80) { swipeOut('right'); }
-                else if (currentX < -80) { swipeOut('left'); }
-                else {
-                    card.style.transition = 'transform .3s cubic-bezier(.4,0,.2,1)';
-                    card.style.transform = '';
-                    card.querySelector('.keep-label').style.opacity = 0;
-                    card.querySelector('.skip-label').style.opacity = 0;
-                }
-            };
+                const paper = papers[currentIndex];
+                history.push({ paper, dir, idx: currentIndex });
 
-            // Touch
-            card.addEventListener('touchstart', e => { const t = e.touches[0]; onStart(t.clientX, t.clientY); }, { passive: true });
-            card.addEventListener('touchmove', e => { const t = e.touches[0]; onMove(t.clientX, t.clientY); e.preventDefault(); }, { passive: false });
-            card.addEventListener('touchend', () => onEnd());
-
-            // Mouse
-            card.addEventListener('mousedown', e => onStart(e.clientX, e.clientY));
-            window.addEventListener('mousemove', e => { if (dragging) onMove(e.clientX, e.clientY); });
-            window.addEventListener('mouseup', () => { if (dragging) onEnd(); });
-        }
-
-        // ── Swipe ──
-        function swipeOut(dir) {
-            if (isAnimating) return;
-            const card = document.querySelector(`.card[data-idx="${currentIndex}"]`);
-            if (!card) return;
-
-            isAnimating = true;
-            const x = dir === 'right' ? window.innerWidth + 100 : -(window.innerWidth + 100);
-            card.style.transition = 'transform .35s cubic-bezier(.4,0,.2,1), opacity .35s';
-            card.style.transform = `translateX(${x}px) rotate(${dir === 'right' ? 20 : -20}deg)`;
-            card.style.opacity = '0';
-
-            const paper = papers[currentIndex];
-            history.push({ paper, dir, idx: currentIndex });
-
-            if (dir === 'right') {
-                addToList(paper);
-            }
-
-            currentIndex++;
-
-            // promote behind cards
-            const behind1 = document.querySelector(`.card[data-idx="${currentIndex}"]`);
-            const behind2 = document.querySelector(`.card[data-idx="${currentIndex + 1}"]`);
-            if (behind1) {
-                behind1.classList.remove('behind-1');
-                behind1.style.transition = 'transform .3s';
-                behind1.style.transform = '';
-                setupDrag(behind1);
-            }
-            if (behind2) {
-                behind2.classList.remove('behind-2');
-                behind2.classList.add('behind-1');
-            }
-
-            setTimeout(() => {
-                card.remove();
-                isAnimating = false;
-
-                // preload next card
-                const nextIdx = currentIndex + 2;
-                if (nextIdx < papers.length) {
-                    createCard(papers[nextIdx], nextIdx);
-                    // reorder z
-                    document.querySelectorAll('.card').forEach(c => {
-                        const d = parseInt(c.dataset.idx) - currentIndex;
-                        c.style.zIndex = 10 - d;
-                        if (!c.classList.contains('behind-1') && !c.classList.contains('behind-2')) {
-                            if (d === 1) { c.classList.add('behind-1'); c.style.transform = ''; }
-                            if (d === 2) { c.classList.add('behind-2'); c.style.transform = ''; }
-                        }
-                    });
+                if (dir === 'right') {
+                    addToList(paper);
                 }
 
-                if (currentIndex >= papers.length) {
-                    empty.style.display = 'flex';
+                currentIndex++;
+
+                // promote behind cards
+                const behind1 = document.querySelector(`.card[data-idx="${currentIndex}"]`);
+                const behind2 = document.querySelector(`.card[data-idx="${currentIndex + 1}"]`);
+                if (behind1) {
+                    behind1.classList.remove('behind-1');
+                    behind1.style.transition = 'transform .3s';
+                    behind1.style.transform = '';
+                    setupDrag(behind1);
                 }
-                updateButtonStates();
-            }, 380);
-        }
+                if (behind2) {
+                    behind2.classList.remove('behind-2');
+                    behind2.classList.add('behind-1');
+                }
 
-        // ── Undo ──
-        function undo() {
-            if (isAnimating || history.length === 0) return;
-            const last = history.pop();
+                setTimeout(() => {
+                    card.remove();
+                    isAnimating = false;
 
-            if (last.dir === 'right') removeFromList(last.paper);
+                    // preload next card
+                    const nextIdx = currentIndex + 2;
+                    if (nextIdx < papers.length) {
+                        createCard(papers[nextIdx], nextIdx);
+                        // reorder z
+                        document.querySelectorAll('.card').forEach(c => {
+                            const d = parseInt(c.dataset.idx) - currentIndex;
+                            c.style.zIndex = 10 - d;
+                            if (!c.classList.contains('behind-1') && !c.classList.contains('behind-2')) {
+                                if (d === 1) { c.classList.add('behind-1'); c.style.transform = ''; }
+                                if (d === 2) { c.classList.add('behind-2'); c.style.transform = ''; }
+                            }
+                        });
+                    }
 
-            currentIndex = last.idx;
-            renderStack();
-        }
+                    if (currentIndex >= papers.length) {
+                        empty.style.display = 'flex';
+                    }
+                    updateButtonStates();
+                }, 380);
+            }
 
-        // ── Field switch ──
-        function setField(el, field) {
-            if (field === currentField) return;
-            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-            el.classList.add('active');
-            currentField = field;
-            fetchPapers(field);
-        }
+            // ── Undo ──
+            function undo() {
+                if (isAnimating || history.length === 0) return;
+                const last = history.pop();
 
-        function reloadField() {
-            fetchPapers(currentField);
-        }
+                if (last.dir === 'right') removeFromList(last.paper);
 
-        // ── Read list ──
-        function addToList(paper) {
-            if (!readList.find(p => p.title === paper.title)) {
-                readList.unshift(paper);
+                currentIndex = last.idx;
+                renderStack();
+            }
+
+            // ── Field switch ──
+            function setField(el, field) {
+                if (field === currentField) return;
+                document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+                el.classList.add('active');
+                currentField = field;
+                fetchPapers(field);
+            }
+
+            function reloadField() {
+                fetchPapers(currentField);
+            }
+
+            // ── Read list ──
+            function addToList(paper) {
+                if (!readList.find(p => p.title === paper.title)) {
+                    readList.unshift(paper);
+                    saveList();
+                    updateListCount();
+                }
+            }
+
+            function removeFromList(paper) {
+                readList = readList.filter(p => p.title !== paper.title);
                 saveList();
                 updateListCount();
+                renderListPanel();
             }
-        }
 
-        function removeFromList(paper) {
-            readList = readList.filter(p => p.title !== paper.title);
-            saveList();
-            updateListCount();
-            renderListPanel();
-        }
-
-        function saveList() {
-            localStorage.setItem('ronbun_list', JSON.stringify(readList));
-        }
-
-        function updateListCount() {
-            document.getElementById('list-count').textContent = readList.length;
-        }
-
-        function openList() {
-            renderListPanel();
-            document.getElementById('list-panel').classList.add('open');
-        }
-
-        function closeList() {
-            document.getElementById('list-panel').classList.remove('open');
-        }
-
-        function renderListPanel() {
-            const container = document.getElementById('list-items');
-            if (readList.length === 0) {
-                container.innerHTML = `<div class="empty-list"><div class="icon">📭</div><p>まだ論文がありません<br>右スワイプで追加しましょう</p></div>`;
-                return;
+            function saveList() {
+                localStorage.setItem('ronbun_list', JSON.stringify(readList));
             }
-            container.innerHTML = readList.map((p, i) => `
+
+            function updateListCount() {
+                document.getElementById('list-count').textContent = readList.length;
+            }
+
+            function openList() {
+                renderListPanel();
+                document.getElementById('list-panel').classList.add('open');
+            }
+
+            function closeList() {
+                document.getElementById('list-panel').classList.remove('open');
+            }
+
+            function renderListPanel() {
+                const container = document.getElementById('list-items');
+                if (readList.length === 0) {
+                    container.innerHTML = `<div class="empty-list"><div class="icon">📭</div><p>まだ論文がありません<br>右スワイプで追加しましょう</p></div>`;
+                    return;
+                }
+                container.innerHTML = readList.map((p, i) => `
     <div class="list-item">
       <button class="list-item-remove" onclick="removeFromList(readList[${i}]);renderListPanel();updateListCount()">✕</button>
       <div class="list-item-field">${p.journal || '論文'}</div>
@@ -860,12 +861,12 @@
       ${p.link ? `<a class="list-item-link" href="${escHtml(p.link)}" target="_blank" rel="noopener">J-STAGEで読む →</a>` : ''}
     </div>
   `).join('');
-        }
+            }
 
-        function updateButtonStates() {
-            // could disable undo if no history
-        }
-    </script>
-</body>
+            function updateButtonStates() {
+                // could disable undo if no history
+            }
+        </script>
+    </body>
 
-</html>
+    </html>
