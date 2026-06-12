@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Ronbun" />
-    <title>積. -Tsumu-</title>
+    <title>Ronbun — 論文スワイプ</title>
     <style>
         /* ── tokens ── */
         :root {
@@ -594,7 +594,7 @@
             history = [];
 
             const q = FIELDS[field].query;
-            const url = `https://api.jstage.jst.go.jp/searchapi/do?service=3&query=${encodeURIComponent(q)}&count=30&sortorder=score&lang=Japanese`;
+            const url = `/api/search?query=${encodeURIComponent(q)}`;
 
             try {
                 const res = await fetch(url);
