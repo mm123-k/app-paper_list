@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Ronbun" />
+    <meta name="apple-mobile-web-app-title" content="Tsumu" />
     <title>積 — Tsumu</title>
     <style>
         /* ── tokens ── */
@@ -595,7 +595,7 @@
 
             const q = FIELDS[field].query;
             const jstageUrl = `https://api.jstage.jst.go.jp/searchapi/do?service=3&keyword=${encodeURIComponent(q)}&count=30&sortflg=1`;
-            const url = `https://api.allorigins.win/raw?url=${encodeURIComponent(jstageUrl)}`;
+            const url = `/api/search?q=${encodeURIComponent(q)}`;
 
             try {
                 const res = await fetch(url);
