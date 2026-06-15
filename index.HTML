@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Ronbun" />
-    <title>積 — Tsumu</title>
+    <title>Ronbun — 論文スワイプ</title>
     <style>
         /* ── tokens ── */
         :root {
@@ -595,7 +595,7 @@
 
             const q = FIELDS[field].query;
             const jstageUrl = `https://api.jstage.jst.go.jp/searchapi/do?service=3&keyword=${encodeURIComponent(q)}&count=30&sortflg=1`;
-            const url = `https://corsproxy.io/?url=${encodeURIComponent(jstageUrl)}`;
+            const url = `https://api.allorigins.win/raw?url=${encodeURIComponent(jstageUrl)}`;
 
             try {
                 const res = await fetch(url);
