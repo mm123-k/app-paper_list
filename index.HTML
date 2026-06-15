@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Tsumu" />
-    <title>積 — Tsumu</title>
+    <meta name="apple-mobile-web-app-title" content="積 - Tsumu" />
+    <title>積 - Tsumu</title>
     <style>
         /* ── tokens ── */
         :root {
@@ -225,6 +225,19 @@
             font-size: 13px;
             color: #AAA;
             font-style: italic;
+        }
+
+        .card-link {
+            display: inline-flex;
+            align-items: center;
+            margin-top: 14px;
+            background: var(--ink);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 8px;
+            padding: 7px 14px;
+            font-size: 12px;
+            font-weight: 600;
         }
 
         /* swipe indicators */
@@ -514,7 +527,7 @@
 <body>
     <div id="app">
         <header>
-            <div class="logo">ron<span>.</span>bun</div>
+            <div class="logo">積<span>.</span>Tsumu</div>
             <button class="list-btn" onclick="openList()">
                 📚 読みたい <span class="count" id="list-count">0</span>
             </button>
@@ -672,6 +685,7 @@
       ${hasAbstract ? escHtml(paper.abstract) : 'アブストラクトはありません'}
     </div>
     <div class="keep-label">読む</div>
+    ${paper.link ? `<a class="card-link" href="${escHtml(paper.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">J-STAGEで開く →</a>` : ""}
     <div class="skip-label">スキップ</div>
   `;
 
