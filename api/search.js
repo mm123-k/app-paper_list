@@ -9,7 +9,10 @@ export default async function handler(req, res) {
     const { q } = req.query;
     if (!q) return res.status(400).json({ error: 'q required' });
 
-    const url = `https://api.jstage.jst.go.jp/searchapi/do?service=3&keyword=${encodeURIComponent(q)}&count=30&sortflg=1`;
+    const currentYear = new Date().getFullYear();
+    const fromYear = currentYear - 5;
+
+    const url = `https://api.jstage.jst.go.jp/searchapi/do?service=3&keyword=${encodeURIComponent(q)}&count=30&sortflg=1&refdflg=1&pubyearfrom=${fromYear}&pubyearto=${currentYear}`;
 
     try {
         const response = await fetch(url);
