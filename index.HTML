@@ -540,6 +540,7 @@
             <button class="filter-chip" data-field="ethnology" onclick="setField(this,'ethnology')">民族学</button>
             <button class="filter-chip" data-field="anthropology" onclick="setField(this,'anthropology')">文化人類学</button>
             <button class="filter-chip" data-field="education" onclick="setField(this,'education')">教育学</button>
+            <button class="filter-chip" data-field="ai" onclick="setField(this,'ai')">AI活用</button>
         </div>
 
         <div id="stack-area">
@@ -579,6 +580,7 @@
             ethnology: { label: '民族学', query: '民族学' },
             anthropology: { label: '文化人類学', query: '文化人類学' },
             education: { label: '教育学', query: '教育学' },
+            ai: { label: 'AI活用', query: '人工知能 活用' },
         };
 
         let currentField = 'psychology';
@@ -868,13 +870,13 @@
             }
             container.innerHTML = readList.map((p, i) => `
     <div class="list-item">
-      <button class="list-item-remove" onclick="removeFromList(readList[${i}]);renderListPanel();updateListCount()">✕</button>
-      <div class="list-item-field">${p.journal || '論文'}</div>
-      <div class="list-item-title">${escHtml(p.title)}</div>
-      <div class="list-item-meta">${p.author ? escHtml(p.author.slice(0, 40)) : ''}${p.year ? '　' + p.year : ''}</div>
-      ${p.link ? `<a class="list-item-link" href="${escHtml(p.link)}" target="_blank" rel="noopener">J-STAGEで読む →</a>` : ''}
+        <button class="list-item-remove" onclick="removeFromList(readList[${i}]);renderListPanel();updateListCount()">✕</button>
+        <div class="list-item-field">${p.journal || '論文'}</div>
+        <div class="list-item-title">${escHtml(p.title)}</div>
+        <div class="list-item-meta">${p.author ? escHtml(p.author.slice(0, 40)) : ''}${p.year ? '　' + p.year : ''}</div>
+        ${p.link ? `<a class="list-item-link" href="${escHtml(p.link)}" target="_blank" rel="noopener">J-STAGEで読む →</a>` : ''}
     </div>
-  `).join('');
+    `).join('');
         }
 
         function updateButtonStates() {
